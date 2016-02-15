@@ -31,10 +31,40 @@ Notes
 
 Howto
 -----
-
+* Install elasticsearch via php composer. see notes below
 * Download the proper pages-articles XML file - for example, enwiki-20130708-pages-articles.xml.bz2.
 * Download the script.
 * Run the script with 2 arguments script.php wikifile.bz2 https://localhost:9200 -- this may take several hours.
+
+Installation of elasticsearch php api via Composer
+-------------------------
+The recommended method to install _Elasticsearch-PHP_ is through [Composer](http://getcomposer.org).
+
+1. Add ``elasticsearch/elasticsearch`` as a dependency in your project's ``composer.json`` file (change version to suit your version of Elasticsearch):
+	```cd
+		nano composer.json
+	```
+
+    ```json
+        {
+            "require": {
+                "elasticsearch/elasticsearch": "~2.0"
+            }
+        }
+    ```
+
+2. Download and install Composer:
+
+    ```bash
+        curl -s http://getcomposer.org/installer | php
+    ```
+
+3. Install your dependencies:
+
+    ```bash
+        php composer.phar install --no-dev
+    ```
+
 
 License
 -------

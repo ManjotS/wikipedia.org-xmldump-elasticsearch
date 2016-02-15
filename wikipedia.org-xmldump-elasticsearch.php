@@ -119,8 +119,8 @@ while( !feof( $in ) ) {
 						fwrite( $out, $m );
 						echo $m;
 					}
-				} catch( $e ) {
-					abort( print_r($e) );
+				} catch( ) {
+					abort( 'elasticsearch error');
 				}
 			}
 		}
