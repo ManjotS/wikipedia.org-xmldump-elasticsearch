@@ -3,14 +3,14 @@
 
 /**
  * @copyright 2013 James Linden <kodekrash@gmail.com>
- * @author James Linden <kodekrash@gmail.com>
- * @link http://jameslinden.com/dataset/wikipedia.org/xml-dump-import-mongodb
+ * @author Manjot Singh <manjot.singh@percona.com> forked from script by James Linden <kodekrash@gmail.com>
+ * @link https://github.com/ManjotS/wikipedia.org-xmldump-elasticsearch
  * @link https://github.com/kodekrash/wikipedia.org-xmldump-mongodb
  * @license BSD (2 clause) <http://www.opensource.org/licenses/BSD-2-Clause>
  */
 
-$dsname = 'mongodb://localhost/wp20130708';
-$file = 'enwiki-20130708-pages-articles.xml.bz2';
+$dsname = $argv[1];
+$file = $argv[0];
 $logpath = './';
 
 /*************************************************************************/
@@ -39,13 +39,12 @@ if( !$out ) {
 	abort( 'Unable to open log file.' );
 }
 
-try {
-	$dc = new mongoclient( $dsname );
-	$ds = $dc->selectdb( trim( parse_url( $dsname, PHP_URL_PATH ), '/' ) );
-} catch( mongoconnectionexception $e ) {
-	abort( $e->getmessage() );
-}
-$ds_page = new mongocollection( $ds, 'page' );
+require 'vendor/autoload.php';
+
+$hosts = [$dsname];
+$client = ClientBuilder::create()           // Instantiate a new ClientBuilder
+                    ->setHosts($hosts)      // Set the hosts
+                    ->build();              // Build the client object
 $ds_ns = [];
 
 $time = microtime( true );
@@ -98,7 +97,7 @@ while( !feof( $in ) ) {
 				}
 				if( $x->revision ) {
 					$drev = [ 'id' => (int)$x->revision->id, 'parent' => (int)$x->revision->parentid ];
-					$drev['timestamp'] = new mongodate( strtotime( (string)$x->revision->timestamp ) );
+					$drev['timestamp'] = strtotime( (string)$x->revision->timestamp ) ;
 					if( $x->revision->contributor ) {
 						$drev['contributor'] = [
 							'id' => (int)$x->revision->contributor->id,
@@ -114,14 +113,14 @@ while( !feof( $in ) ) {
 					unset( $drev );
 				}
 				try {
-					if( $ds_page->save( $dpage ) ) {
+					if( $client->index($dpage ) ) {
 						$count ++;
 						$m = date( 'Y-m-d H:i:s' ) . chr(9) . $dpage['_id'] . chr(9) . $dpage['title'] . PHP_EOL;
 						fwrite( $out, $m );
 						echo $m;
 					}
-				} catch( mongocursorexception $e ) {
-					abort( $e->getmessage() );
+				} catch( $e ) {
+					abort( print_r($e) );
 				}
 			}
 		}
