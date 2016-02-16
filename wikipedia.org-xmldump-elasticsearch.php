@@ -9,8 +9,8 @@
  * @license BSD (2 clause) <http://www.opensource.org/licenses/BSD-2-Clause>
  */
 
-$dsname = $argv[1];
-$file = $argv[0];
+$dsname = $argv[2];
+$file = $argv[1];
 $logpath = './';
 
 /*************************************************************************/
@@ -42,7 +42,7 @@ if( !$out ) {
 require 'vendor/autoload.php';
 
 $hosts = [$dsname];
-$client = ClientBuilder::create()           // Instantiate a new ClientBuilder
+$client = \Elasticsearch\ClientBuilder::create()           // Instantiate a new ClientBuilder
                     ->setHosts($hosts)      // Set the hosts
                     ->build();              // Build the client object
 $ds_ns = [];
@@ -55,11 +55,13 @@ $count = 0;
 $line = null;
 while( !feof( $in ) ) {
 	$l = bzread( $in, 1 );
+
 	if( $l === false ) {
 		abort( 'Error reading compressed file.' );
 	}
 	if( $l == PHP_EOL ) {
 		$line = trim( $line );
+
 		if( $line == '<namespaces>' || $line == '<page>' ) {
 			$start = true;
 		}
@@ -88,7 +90,7 @@ while( !feof( $in ) ) {
 			$x = simplexml_load_string( $chunk );
 			$chunk = $line = null;
 			if( $x ) {
-				$dpage = [ '_id' => (int)$x->id, 'title' => (string)$x->title, 'ns' => $ds_ns[ (int)$x->ns ] ];
+				$dpage = [ 'index' => 'wikipedia', 'type' => 'af', 'id' => (int)$x->id, 'title' => (string)$x->title, 'ns' => $ds_ns[ (int)$x->ns ] ];
 				if( $x->redirect ) {
 					$y = (array)$x->redirect;
 					$dpage['redirect'] = $y['@attributes']['title'];
@@ -112,16 +114,14 @@ while( !feof( $in ) ) {
 					$dpage['revision'] = $drev;
 					unset( $drev );
 				}
-				try {
-					if( $client->index($dpage ) ) {
+				$result = $client->index($dpage);
+					if( $result ) {
 						$count ++;
 						$m = date( 'Y-m-d H:i:s' ) . chr(9) . $dpage['_id'] . chr(9) . $dpage['title'] . PHP_EOL;
 						fwrite( $out, $m );
 						echo $m;
 					}
-				} catch( ) {
-					abort( 'elasticsearch error');
-				}
+				echo $result;
 			}
 		}
 		$line = null;
@@ -134,5 +134,3 @@ fclose( $out );
 bzclose( $in );
 
 echo PHP_EOL;
-
-?>

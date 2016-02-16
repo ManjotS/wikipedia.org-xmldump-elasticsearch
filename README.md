@@ -19,7 +19,7 @@ Environment
 * GNU/Linux
 * PHP 5.4 + (with mbstring, simplexml extensions)
 * Elasticsearch 2.2 +
-* curl
+* php5-curl
 
 Notes
 -----
@@ -33,6 +33,16 @@ Howto
 -----
 * Install elasticsearch via php composer. see notes below
 * Download the proper pages-articles XML file - for example, enwiki-20130708-pages-articles.xml.bz2.
+* bunzip2 the wiki file
+* Create the wikipedia index
+	```bash
+		curl -XPUT http://localhost:9200/wikipedia -d '{
+		    "settings" : {
+		        "number_of_shards" : 12,
+		        "number_of_replicas" : 2
+		    }
+		}'
+	```
 * Download the script.
 * Run the script with 2 arguments script.php wikifile.bz2 https://localhost:9200 -- this may take several hours.
 
@@ -41,7 +51,8 @@ Installation of elasticsearch php api via Composer
 The recommended method to install _Elasticsearch-PHP_ is through [Composer](http://getcomposer.org).
 
 1. Add ``elasticsearch/elasticsearch`` as a dependency in your project's ``composer.json`` file (change version to suit your version of Elasticsearch):
-	```cd
+	```bash
+		cd
 		nano composer.json
 	```
 
